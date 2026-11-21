@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   plan:
-    runs-on: xcode-27
+    runs-on: macos-26
     outputs:
       ipa: ${{ steps.key.outputs.ipa }}
       reuse: ${{ steps.ipa.outputs.cache-hit }}
@@ -55,7 +55,7 @@ jobs:
   reuse:
     needs: plan
     if: needs.plan.outputs.reuse == 'true'
-    runs-on: xcode-27
+    runs-on: macos-26
     env:
       MADEIRA_PLANNED_SDK: ${{ needs.plan.outputs.sdk }}
       MADEIRA_RUNTIME_SDK: ${{ needs.plan.outputs.sdk }}
@@ -84,10 +84,10 @@ jobs:
   llvm:
     needs: plan
     if: needs.plan.outputs.reuse != 'true'
-    runs-on: xcode-27
+    runs-on: macos-26
     env:
       MADEIRA_PLANNED_SDK: ${{ needs.plan.outputs.sdk }}
-    timeout-minutes: 360
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - id: sdk
@@ -124,10 +124,10 @@ jobs:
   fex:
     needs: plan
     if: needs.plan.outputs.reuse != 'true'
-    runs-on: xcode-27
+    runs-on: macos-26
     env:
       MADEIRA_PLANNED_SDK: ${{ needs.plan.outputs.sdk }}
-    timeout-minutes: 360
+    timeout-minutes: 120
     outputs:
       key: ${{ steps.key.outputs.key }}
     steps:
@@ -164,10 +164,10 @@ jobs:
   i386:
     needs: plan
     if: needs.plan.outputs.reuse != 'true'
-    runs-on: xcode-27
+    runs-on: macos-26
     env:
       MADEIRA_PLANNED_SDK: ${{ needs.plan.outputs.sdk }}
-    timeout-minutes: 360
+    timeout-minutes: 120
     outputs:
       key: ${{ steps.key.outputs.key }}
     steps:
@@ -214,8 +214,8 @@ jobs:
   runtime:
     needs: [plan, llvm]
     if: needs.plan.outputs.reuse != 'true'
-    runs-on: xcode-27
-    timeout-minutes: 360
+    runs-on: macos-26
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -259,13 +259,13 @@ jobs:
   app:
     needs: [plan, llvm, fex, i386, runtime]
     if: needs.plan.outputs.reuse != 'true'
-    runs-on: xcode-27
+    runs-on: macos-26
     env:
       MADEIRA_PLANNED_SDK: ${{ needs.plan.outputs.sdk }}
       MADEIRA_PLANNED_IPA: ${{ needs.plan.outputs.ipaenv }}
       MADEIRA_RUNTIME_SDK: ${{ needs.plan.outputs.sdk }}
       MADEIRA_RUNTIME_REUSE: '1'
-    timeout-minutes: 360
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:

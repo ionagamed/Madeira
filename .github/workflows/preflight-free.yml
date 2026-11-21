@@ -1,0 +1,48 @@
+name: Preflight (free runner)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Toolchain identity
+        run: |
+          set -x
+          sw_vers
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i ios || true
+          xcrun --sdk iphoneos --show-sdk-version
+          xcrun --sdk iphoneos --show-sdk-build-version
+          xcrun --sdk macosx --show-sdk-version
+          rustup --version || true
+          brew --version | head -1
+      - name: Init submodules (public, pinned branches)
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth 1 2>&1 | tail -20
+          git submodule status --recursive | head -20
+      - name: CI input key (requires rustc in pairing crate dir)
+        run: |
+          rustup target add aarch64-apple-ios 2>&1 | tail -3 || true
+          bash tools/build/ci-input-key.sh
+        env:
+          GITHUB_OUTPUT: ${{ runner.temp }}/out.txt
+      - name: rusage v6 SDK probe (expected to be optional)
+        run: |
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          if printf '#include <sys/resource.h>\nvoid probe(struct rusage_info_v6 *r) { (void)r->ri_page_wait_time_mach; }\n' | \
+              xcrun -sdk iphoneos clang -arch arm64 -isysroot "$SDK" \
+                -miphoneos-version-min=17.0 -x c -fsyntax-only - >/dev/null 2>&1; then
+            echo "RESULT: rusage_info_v6.ri_page_wait_time_mach PRESENT (xcode-27 behaviour)"
+          else
+            echo "RESULT: rusage_info_v6.ri_page_wait_time_mach ABSENT (graceful fallback path)"
+          fi
