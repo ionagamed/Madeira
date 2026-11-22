@@ -44,6 +44,10 @@ log "Bootstrapping wineserver"
 "$ROOT/build/wineserver/build.sh"
 
 log "Building Wine unix libraries"
+if ! git -C "$ROOT/wine" apply --reverse --check "$ROOT/patches/wine-opengl-winios.patch" >/dev/null 2>&1; then
+  log "Applying Wine OpenGL/WoW64 patch"
+  git -C "$ROOT/wine" apply "$ROOT/patches/wine-opengl-winios.patch"
+fi
 "$ROOT/build/ntdll-unix/build.sh"
 "$ROOT/build/win32u-unix/build.sh"
 
