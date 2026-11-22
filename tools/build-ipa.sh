@@ -21,6 +21,34 @@ export PATH="$(brew --prefix bison)/bin:$(brew --prefix llvm)/bin:$PATH"
 log "Checking out submodules"
 git -C "$ROOT" submodule update --init --recursive
 
+if [[ -d "$ROOT/tests/host" ]]; then
+  log "Running comprehensive host test suite"
+  for t in \
+    tests/host/check-config-catalog.py \
+    tests/host/check-duo-display.py \
+    tests/host/check-frontend.py \
+    tests/host/check-game-recommendations.py \
+    tests/host/check-library-zoom.py \
+    tests/host/check-wow-address-requirements.py \
+    tests/host/check-va-scan-floor.py \
+    tests/host/check-wow64-params-alloc.py \
+    tests/host/check-desktop-tree-dump.py \
+    tests/host/check-proc-socket-reuse.py \
+    tests/host/check-ini-editor.py \
+    tests/host/check-runtime-settings.py \
+    tests/host/check-pointer-capture.py \
+    tests/host/check-steam-cdn-host-rotation.py \
+    tests/host/check-large-library.py \
+    tests/host/check-steam-games.py \
+    tests/host/check-steam-library-retry.py \
+    tests/host/check-steam-loading.py \
+    tests/host/check-steam-session-jobs.py \
+    tests/host/check-library-cover-cache.py; do
+    echo "  -> $t"
+    python3 "$ROOT/$t"
+  done
+fi
+
 log "Validating bundled Wine prefix"
 bash "$ROOT/tools/check-prefix-template.sh" "$ROOT/app/Madeira/prefix-template.tar.gz"
 
